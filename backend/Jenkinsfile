@@ -1,0 +1,196 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven 3.9.4'
+        jdk 'JDK 21'
+    }
+    
+    environment {
+        MAVEN_OPTS = '-Dmaven.repo.local=$WORKSPACE/.m2/repository'
+        SONAR_SCANNER_HOME = tool('sonar-scanner')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                script {
+                    // Create .m2 directory if it doesn't exist
+                    sh 'mkdir -p $WORKSPACE/.m2/repository'
+                    
+                    // Set Maven settings
+                    sh '''
+                        echo "<settings>
+                            <localRepository>$WORKSPACE/.m2/repository</localRepository>
+                            <mirrors>
+                                <mirror>
+                                    <id>central</id>
+                                    <url>https://repo.maven.apache.org/maven2</url>
+                                    <mirrorOf>central</mirrorOf>
+                                </mirror>
+                            </mirrors>
+                        </settings>" > $WORKSPACE/.m2/settings.xml
+                    '''
+                }
+            }
+        }
+        
+        stage('Compile') {
+            steps {
+                withMaven(
+                    maven: 'Maven 3.9.4',
+                    jdk: 'JDK 21',
+                    mavenSettingsConfig: 'my-maven-settings'
+                ) {
+                    sh 'mvn clean compile -DskipTests'
+                }
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                withMaven(
+                    maven: 'Maven 3.9.4',
+                    jdk: 'JDK 21',
+                    mavenSettingsConfig: 'my-maven-settings'
+                ) {
+                    sh '''
+                        mvn test \
+                            -Dmaven.test.failure.ignore=true \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                    '''
+                }
+            }
+            post {
+                always {
+                    // Publish test results
+                    junit 'target/surefire-reports/**/*.xml'
+                    
+                    // Publish test coverage
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'target/site/jacoco',
+                        reportFiles: 'index.html',
+                        reportName: 'JaCoCo Coverage Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    withMaven(
+                        maven: 'Maven 3.9.4',
+                        jdk: 'JDK 21',
+                        mavenSettingsConfig: 'my-maven-settings'
+                    ) {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=EmailNotificationSystem \
+                                -Dsonar.projectName=EmailNotificationSystem \
+                                -Dsonar.projectVersion=1.0.0 \
+                                -Dsonar.sources=src/main/java \
+                                -Dsonar.tests=src/test/java \
+                                -Dsonar.java.binaries=target/classes \
+                                -Dsonar.java.test.binaries=target/test-classes \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                                -Dsonar.exclusions=**/dto/**,**/model/**,**/config/** \
+                                -Dsonar.java.coveragePlugin=jacoco \
+                                -Dsonar.dynamicAnalysis=reuseReports \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_AUTH_TOKEN}
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    script {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Package') {
+            steps {
+                withMaven(
+                    maven: 'Maven 3.9.4',
+                    jdk: 'JDK 21',
+                    mavenSettingsConfig: 'my-maven-settings'
+                ) {
+                    sh 'mvn package -DskipTests'
+                }
+            }
+            post {
+                success {
+                    // Archive the built artifact
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean up workspace
+            cleanWs()
+        }
+        success {
+            script {
+                // Send success notification
+                emailext (
+                    subject: "✅ Jenkins Build Success: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+                    body: """
+                        <h3>Build Success!</h3>
+                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                        <p><strong>Branch:</strong> ${env.BRANCH_NAME}</p>
+                        <p><strong>Commit:</strong> ${env.GIT_COMMIT}</p>
+                        <p><strong>Test Results:</strong> All tests passed</p>
+                        <p><strong>SonarQube:</strong> <a href="${SONAR_HOST_URL}/dashboard?id=EmailNotificationSystem">View Analysis</a></p>
+                    """,
+                    to: "${env.CHANGE_AUTHOR_EMAIL}",
+                    from: "jenkins@company.com",
+                    mimeType: "text/html"
+                )
+            }
+        }
+        failure {
+            script {
+                // Send failure notification
+                emailext (
+                    subject: "❌ Jenkins Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+                    body: """
+                        <h3>Build Failed!</h3>
+                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
+                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                        <p><strong>Branch:</strong> ${env.BRANCH_NAME}</p>
+                        <p><strong>Commit:</strong> ${env.GIT_COMMIT}</p>
+                        <p><strong>Failure Stage:</strong> ${currentBuild.currentResult}</p>
+                        <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">View Logs</a></p>
+                        <p><strong>SonarQube:</strong> <a href="${SONAR_HOST_URL}/dashboard?id=EmailNotificationSystem">View Analysis</a></p>
+                    """,
+                    to: "${env.CHANGE_AUTHOR_EMAIL}",
+                    from: "jenkins@company.com",
+                    mimeType: "text/html"
+                )
+            }
+        }
+    }
+}
