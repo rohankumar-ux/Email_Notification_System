@@ -109,7 +109,7 @@ class EmailServiceTest {
         EmailResponse result = emailService.sendRawEmail(rawEmailRequest);
 
         assertNotNull(result);
-        verify(emailRepository).save(any(Email.class));
+        verify(emailRepository, times(2)).save(any(Email.class));
         verify(emailProducer).sendEmail(testEmail.getId());
         verify(emailResponseConverter).convertToResponse(testEmail);
     }
