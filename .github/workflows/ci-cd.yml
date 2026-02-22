@@ -1,0 +1,103 @@
+name: Backend CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    name: Backend Tests & Analysis
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    - name: Cache Maven packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Add JaCoCo plugin for coverage
+      run: |
+        mvn org.jacoco:jacoco-maven-plugin:prepare-agent -f EmailNotificationSystem/pom.xml
+
+    - name: Run Backend Tests
+      run: |
+        cd EmailNotificationSystem
+        mvn clean test
+
+    - name: Generate Test Report
+      run: |
+        cd EmailNotificationSystem
+        mvn surefire-report:report
+
+    - name: Publish Backend Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Backend Test Results
+        path: EmailNotificationSystem/target/surefire-reports/*.xml
+        reporter: java-junit
+
+    - name: Generate Code Coverage Report
+      run: |
+        cd EmailNotificationSystem
+        mvn jacoco:report
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        file: ./EmailNotificationSystem/target/site/jacoco/jacoco.xml
+        fail_ci_if_error: false
+
+    - name: Build and analyze with SonarCloud
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        cd EmailNotificationSystem
+        mvn clean verify sonar:sonar \
+          -Dsonar.projectKey=rohankumar-ux_Email_Notification_System \
+          -Dsonar.organization=rohankumar-ux \
+          -Dsonar.host.url=https://sonarcloud.io
+
+    - name: Package Backend Application
+      run: |
+        cd EmailNotificationSystem
+        mvn package -DskipTests
+
+    - name: Upload Backend JAR Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-jar
+        path: EmailNotificationSystem/target/*.jar
+        retention-days: 30
