@@ -44,18 +44,14 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
-    - name: Add JaCoCo plugin for coverage
-      run: |
-        mvn org.jacoco:jacoco-maven-plugin:prepare-agent -f EmailNotificationSystem/pom.xml
-
     - name: Run Backend Tests
       run: |
-        cd EmailNotificationSystem
+        cd backend
         mvn clean test
 
     - name: Generate Test Report
       run: |
-        cd EmailNotificationSystem
+        cd backend
         mvn surefire-report:report
 
     - name: Publish Backend Test Results
@@ -63,19 +59,14 @@ jobs:
       if: always()
       with:
         name: Backend Test Results
-        path: EmailNotificationSystem/target/surefire-reports/*.xml
+        path: backend/target/surefire-reports/*.xml
         reporter: java-junit
-
-    - name: Generate Code Coverage Report
-      run: |
-        cd EmailNotificationSystem
-        mvn jacoco:report
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v4
       if: always()
       with:
-        file: ./EmailNotificationSystem/target/site/jacoco/jacoco.xml
+        file: ./backend/target/site/jacoco/jacoco.xml
         fail_ci_if_error: false
 
     - name: Build and analyze with SonarCloud
@@ -84,7 +75,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
-        cd EmailNotificationSystem
+        cd backend
         mvn clean verify sonar:sonar \
           -Dsonar.projectKey=rohankumar-ux_Email_Notification_System \
           -Dsonar.organization=rohankumar-ux \
@@ -92,12 +83,12 @@ jobs:
 
     - name: Package Backend Application
       run: |
-        cd EmailNotificationSystem
+        cd backend
         mvn package -DskipTests
 
     - name: Upload Backend JAR Artifact
       uses: actions/upload-artifact@v4
       with:
         name: backend-jar
-        path: EmailNotificationSystem/target/*.jar
+        path: backend/target/*.jar
         retention-days: 30
