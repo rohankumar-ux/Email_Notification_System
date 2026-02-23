@@ -1,8 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import { emailApi } from '../services/emailService';
-import { PageHeader, Card, Field, Select, Input, Button, StatusBadge, Table, Pagination, Modal, Spinner, EmptyState } from '../components/ui/index';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Card } from '../components/ui/Card';
+import { Select } from '../components/ui/Select';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { Table } from '../components/ui/Table';
+import { Pagination } from '../components/ui/Pagination';
+import { Modal } from '../components/ui/Modal';
+import { Spinner } from '../components/ui/Spinner';
+import { EmptyState } from '../components/ui/EmptyState';
 import { formatDate, truncate } from '../utils/formatters';
 
 const STATUSES = ['', 'PENDING', 'QUEUED', 'SENT', 'DELIVERED', 'FAILED', 'BOUNCED'];
@@ -42,7 +52,7 @@ export default function EmailHistory() {
   useEffect(() => {
     const id = searchParams.get('id');
     if (id) emailApi.getById(id).then((r) => setDetail(r.data));
-  }, []); // eslint-disable-line
+  }, []); 
 
   const setFilter = (k) => (e) => { setFilters((f) => ({ ...f, [k]: e.target.value })); setPage(0); };
 

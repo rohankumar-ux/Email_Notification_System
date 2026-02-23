@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { emailApi, templateApi } from '../services/emailService';
-import { PageHeader, Card, Field, Input, TagInput, Select, Button, Spinner } from '../components/ui/index';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Card } from '../components/ui/Card';
+import { Field } from '../components/ui/Field';
+import { Input } from '../components/ui/Input';
+import { TagInput } from '../components/ui/TagInput';
+import { Select } from '../components/ui/Select';
+import { Button } from '../components/ui/Button';
+import { Spinner } from '../components/ui/Spinner';
 import { validateEmail, renderTemplate } from '../utils/formatters';
 
 export default function SendTemplateEmail() {

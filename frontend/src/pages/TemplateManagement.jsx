@@ -1,7 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { templateApi } from '../services/emailService';
-import { PageHeader, Card, Field, Input, Textarea, Button, Modal, StatusBadge, Table, EmptyState, Spinner } from '../components/ui/index';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Card } from '../components/ui/Card';
+import { Field } from '../components/ui/Field';
+import { Input } from '../components/ui/Input';
+import { Textarea } from '../components/ui/Textarea';
+import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { Table } from '../components/ui/Table';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Spinner } from '../components/ui/Spinner';
 import { formatDate } from '../utils/formatters';
 
 const EMPTY = { name: '', subject: '', htmlBody: '', sendgridTemplateId: '', variableKeys: '' };

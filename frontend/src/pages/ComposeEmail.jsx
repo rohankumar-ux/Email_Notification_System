@@ -1,28 +1,33 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { emailApi } from '../services/emailService';
-import { PageHeader, Card, Field, Input, Textarea, TagInput, Button } from '../components/ui/index';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Card } from '../components/ui/Card';
+import { Field } from '../components/ui/Field';
+import { Input } from '../components/ui/Input';
+import { Textarea } from '../components/ui/Textarea';
+import { TagInput } from '../components/ui/TagInput';
+import { Button } from '../components/ui/Button';
 import { validateEmail } from '../utils/formatters';
 
 const INIT = { toEmails: [], subject: '', body: '', html: false };
 
 export default function ComposeEmail() {
-  const [form, setForm]       = useState(INIT);
-  const [errors, setErrors]   = useState({});
+  const [form, setForm] = useState(INIT);
+  const [errors, setErrors] = useState({});
   const [sending, setSending] = useState(false);
   const [testing, setTesting] = useState(false);
-  // sentEmail holds the last queued email record — needed to fire a test against its id
   const [sentEmail, setSentEmail] = useState(null);
 
-  const set  = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
-  const setE = (key) => (e)   => set(key)(e.target.value);
+  const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+  const setE = (key) => (e) => set(key)(e.target.value);
 
   const validate = () => {
     const e = {};
-    if (!form.toEmails.length)                      e.toEmails  = 'At least one recipient required';
+    if (!form.toEmails.length) e.toEmails = 'At least one recipient required';
     else if (form.toEmails.some((t) => !validateEmail(t))) e.toEmails = 'One or more emails are invalid';
-    if (!form.subject.trim())                        e.subject   = 'Subject is required';
-    if (!form.body.trim())                           e.body      = 'Body is required';
+    if (!form.subject.trim()) e.subject = 'Subject is required';
+    if (!form.body.trim()) e.body = 'Body is required';
     setErrors(e);
     return !Object.keys(e).length;
   };
@@ -42,7 +47,6 @@ export default function ComposeEmail() {
   };
 
   const handleTest = async () => {
-    // If there's no prior sent email, validate and queue one first, then test it
     if (!sentEmail) {
       if (!validate()) return;
       setSending(true);
@@ -68,7 +72,6 @@ export default function ComposeEmail() {
       return;
     }
 
-    // Already have a queued email — just fire the test
     setTesting(true);
     try {
       await emailApi.sendTest(sentEmail.id);
@@ -127,7 +130,6 @@ export default function ComposeEmail() {
 
           <div style={{ flex: 1 }} />
 
-          {/* Test email button — always visible; sends test to the from address */}
           <Button
             variant="secondary"
             loading={testing}

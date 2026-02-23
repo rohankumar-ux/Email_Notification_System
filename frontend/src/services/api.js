@@ -16,7 +16,6 @@ api.interceptors.response.use(
       err.message ||
       'Something went wrong';
     
-    // Only show toast for non-network errors to avoid spam when backend is down
     if (!err.message.includes('Network Error') && !err.message.includes('ECONNREFUSED')) {
       toast.error(message);
     }

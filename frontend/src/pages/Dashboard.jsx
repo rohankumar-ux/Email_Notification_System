@@ -1,12 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BarChart, Bar, Cell, LineChart, Line, XAxis, YAxis,
+  BarChart, Bar, Cell , LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { subDays, format, parseISO, startOfDay, eachDayOfInterval } from 'date-fns';
 import { emailApi } from '../services/emailService';
-import { StatCard, Card, StatusBadge, PageHeader, Spinner, Table, EmptyState } from '../components/ui/index';
+import { StatCard } from '../components/ui/StatCard';
+import { Card } from '../components/ui/Card';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Spinner } from '../components/ui/Spinner';
+import { Table } from '../components/ui/Table';
+import { EmptyState } from '../components/ui/EmptyState';
 import { formatDate, truncate } from '../utils/formatters';
 
 const STAT_CARDS = [
@@ -83,7 +89,6 @@ export default function Dashboard() {
         actions={<button className="btn btn-ghost btn-sm" onClick={load}>↻ Refresh</button>}
       />
 
-      {/* Stat Cards */}
       <div className="grid-stats" style={{ marginBottom: 20 }}>
         {STAT_CARDS.map(({ key, label, color }) => (
           <StatCard key={key} label={label} value={stats?.[key] ?? 0} color={color}
