@@ -152,20 +152,7 @@ export default function EmailHistory() {
                 Send Test Email
               </Button>
             </div>
-            {detail.attachments?.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 12, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>Attachments ({detail.attachments.length})</div>
-                <div style={{ border: '1px solid var(--gray-200)', borderRadius: 6, overflow: 'hidden' }}>
-                  {detail.attachments.map((a) => (
-                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderBottom: '1px solid var(--gray-100)', fontSize: 13 }}>
-                      <span>📎</span>
-                      <span style={{ flex: 1 }}>{a.fileName}</span>
-                      <span style={{ color: 'var(--gray-400)', fontSize: 12 }}>{(a.fileSize / 1024).toFixed(1)} KB</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            
             {detail.body && (
               <div style={{ marginTop: 16 }}>
                 <div style={{ fontSize: 12, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>Body</div>
