@@ -52,8 +52,8 @@ export default function SendTemplateEmail() {
     setLoading(true);
     try {
       const res = await emailApi.sendTemplate({
-        fromEmail: fromEmail || undefined, toEmails,
-        templateId: Number(selectedId), variables,
+        toEmails,
+        templateId: selectedId.trim(), variables,
       });
       setSentId(res.data?.id);
       toast.success('Template email queued!');
@@ -89,10 +89,6 @@ export default function SendTemplateEmail() {
               Subject: {selected.subject}
             </div>
           )}
-
-          <Field label="From Email" hint="Optional" error={errors.fromEmail}>
-            <Input type="email" placeholder="sender@yourdomain.com" value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} error={errors.fromEmail} />
-          </Field>
 
           <Field label="To" required error={errors.toEmails} hint="Enter or comma to add">
             <TagInput value={toEmails} onChange={setToEmails} placeholder="recipient@example.com" error={errors.toEmails} />

@@ -18,6 +18,9 @@ public interface EmailRepository extends JpaRepository<Email , UUID> {
 
     Optional<Email> findById(UUID emailId);
 
+     @Query("SELECT e FROM Email e LEFT JOIN FETCH e.emailTemplate WHERE e.id = :emailId")
+    Optional<Email> findByIdWithTemplate(@Param("emailId") UUID emailId);
+
     Optional<Email> findBySendgridMessageId(String sendgridMessageId);
     
     Page<Email> findByStatus(EmailStatus status , Pageable pageable);

@@ -99,7 +99,7 @@ public class EmailConsumer {
         
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                return emailRepository.findById(emailId)
+                return emailRepository.findByIdWithTemplate(emailId)
                         .orElseThrow(() -> new ResourceNotFoundException("Email not found: id=" + emailId));
             } catch (ResourceNotFoundException ex) {
                 if (attempt == maxRetries) {
