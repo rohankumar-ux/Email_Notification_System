@@ -96,8 +96,6 @@ This project uses industry-standard practices including:
 - Comprehensive testing
 - Documentation
 
-
-
 ## License
 
 This is a demo project for educational and development purposes.
